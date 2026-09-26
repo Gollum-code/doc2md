@@ -2,8 +2,8 @@
 
 > 把 **PPTX / DOCX / XLSX / PDF** 转成 LLM 能直接读的干净 Markdown —— **中文友好**、表格与阅读顺序优先，零配置即用。
 
-[![npm version](https://img.shields.io/npm/v/doc2md)](https://www.npmjs.com/package/doc2md)
-[![npm downloads](https://img.shields.io/npm/dm/doc2md)](https://www.npmjs.com/package/doc2md)
+[![npm version](https://img.shields.io/npm/v/@gollum-code/doc2md)](https://www.npmjs.com/package/@gollum-code/doc2md)
+[![npm downloads](https://img.shields.io/npm/dm/@gollum-code/doc2md)](https://www.npmjs.com/package/@gollum-code/doc2md)
 [![CI](https://img.shields.io/github/actions/workflow/status/Gollum-code/doc2md/ci.yml?branch=main&label=CI)](https://github.com/Gollum-code/doc2md/actions)
 [![License](https://img.shields.io/npm/l/doc2md)](LICENSE)
 
@@ -34,9 +34,9 @@ RAG / AI 应用里「上传文档 → 喂给大模型」一直靠 Python 生态�
 ## 📦 安装
 
 ```bash
-npm install -g doc2md   # CLI
+npm install -g @gollum-code/doc2md   # CLI
 # 或作为库：
-npm install doc2md
+npm install @gollum-code/doc2md
 ```
 
 要求 Node ≥ 18.17。

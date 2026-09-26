@@ -1,5 +1,5 @@
 {
-  "name": "doc2md",
+  "name": "@gollum-code/doc2md",
   "version": "0.1.0",
   "description": "把 docx / pptx / xlsx / pdf 转成 LLM 能读的干净 Markdown —— 中文友好、表格与阅读顺序优先",
   "keywords": [
@@ -53,7 +53,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "release": "npm run prepublishOnly && npm publish --access public"
   },
   "dependencies": {
     "cac": "^6.7.14",
