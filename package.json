@@ -1,0 +1,57 @@
+{
+  "name": "doc2md",
+  "version": "0.1.0",
+  "description": "把 docx / pptx / xlsx / pdf 转成 LLM 能读的干净 Markdown —— 中文友好、表格与阅读顺序优先",
+  "keywords": [
+    "markdown",
+    "docx",
+    "pptx",
+    "xlsx",
+    "pdf",
+    "rag",
+    "llm",
+    "converter",
+    "chinese"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "doc2md": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "fast-xml-parser": "^4.5.1",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
