@@ -1,6 +1,11 @@
 # doc2md
 
-> 把 **PPTX / DOCX / XLSX** 转成 LLM 能直接读的干净 Markdown —— **中文友好**、表格与阅读顺序优先，零配置即用。
+> 把 **PPTX / DOCX / XLSX / PDF** 转成 LLM 能直接读的干净 Markdown —— **中文友好**、表格与阅读顺序优先，零配置即用。
+
+[![npm version](https://img.shields.io/npm/v/doc2md)](https://www.npmjs.com/package/doc2md)
+[![npm downloads](https://img.shields.io/npm/dm/doc2md)](https://www.npmjs.com/package/doc2md)
+[![CI](https://img.shields.io/github/actions/workflow/status/Gollum-code/doc2md/ci.yml?branch=main&label=CI)](https://github.com/Gollum-code/doc2md/actions)
+[![License](https://img.shields.io/npm/l/doc2md)](LICENSE)
 
 ```
 $ doc2md 季度业务汇报.pptx
@@ -18,6 +23,7 @@ RAG / AI 应用里「上传文档 → 喂给大模型」一直靠 Python 生态�
 | **PPTX** | 标题与要点层级、嵌套列表、**表格**、**图表转表格**、**演讲者备注**、图片导出、隐藏页开关、按位置重排阅读顺序 |
 | **DOCX** | 标题结构、**有序/无序/嵌套列表**、表格（含合并单元格）、链接、**脚注**、内联加粗/斜体/代码、图片、域代码处理、分页符 |
 | **XLSX** | 多工作表、共享字符串、富文本、**日期/百分比格式**、合并单元格、空行修剪 |
+| **PDF** ⚠️ | 文本抽取（pdf.js）+ **阅读顺序重排** + 列对齐表格启发式；扫描件 OCR 与公式暂未支持 |
 | **Markdown** | 透传 `.md` / `.txt` |
 
 - **中文优化**：中英混排自动补空格、全角字母数字转半角、项目符号/中文序号归一化、零宽字符清理，且**不破坏代码块与表格**
@@ -135,13 +141,24 @@ Inline = text | code | strong | em | del | sup | sub | link | image | break
 | M1 | pptx2md + CLI + 表格 | ✅ 已实现 |
 | M2 | docx2md + 图片导出 + 脚注 | ✅ 已实现 |
 | M3 | xlsx2md + 中文优化 + 批量 | ✅ 已实现 |
-| M4 | pdf2md（文本 + 表格 + 阅读顺序/双栏） | ⏳ 规划 |
+| M4 | pdf2md：文本抽取 + 阅读顺序 + 列对齐表格 | 🚧 已起步（扫描件 OCR、公式、双栏深度检测待做） |
+
+## 🧪 试试（examples/）
+
+仓库自带示例文件，克隆后一行命令即可看到效果：
+
+```bash
+node dist/cli.js examples/demo.pptx   # → examples/demo.md
+node dist/cli.js examples/demo.pdf    # → examples/demo.pdf.md
+```
+
+`examples/` 下的输入文件由 `tests/fixtures/build.ts` 程序化生成，无任何外部素材。
 
 ## 🧠 设计
 
 ```
 doc2md (TypeScript 库 + CLI)
-  ├─ parser/       每一格式一个：pptx / docx / xlsx  → 统一 IR（Doc）
+  ├─ parser/       每一格式一个：pptx / docx / xlsx（同步）+ pdf（异步，pdf.js）→ 统一 IR（Doc）
   ├─ core/         OOXML 包读取（zip+rels+编码）、嵌套列表构建、图片资产分配
   ├─ normalize.ts  中文/标点/中英混排规范化（Markdown 感知）
   ├─ md/           IR → Markdown 渲染（表格/转义/脚注）与 front-matter 编排
@@ -149,7 +166,7 @@ doc2md (TypeScript 库 + CLI)
 ```
 
 - 每种格式都输出**同一棵 IR 树**，新增格式只写 parser，渲染管线通用
-- 解析器全同步（fflate 解压 + fast-xml-parser），零原生依赖，浏览器可复用核心
+- 解析器纯同步（fflate 解压 + fast-xml-parser），零原生依赖，浏览器可复用核心；PDF 走异步 pdf.js
 - 图片引用延迟分配：解析器只登记 `source → ref`，转换完成统一落盘
 
 ## ⚖️ 对比
@@ -160,7 +177,7 @@ doc2md (TypeScript 库 + CLI)
 | markitdown | Python | 中文差、无 Node 生态 |
 | mammoth.js | Node | 仅 docx，且只转正文、无表格结构 |
 | docx-preview | Node | 渲染预览，不输出 Markdown |
-| pdf.js | Node | 解析原语，不封装为 Markdown |
+| pdf.js | Node | 解析原语，doc2md 将其封装为 Markdown |
 
 ## 📝 开发
 

@@ -2,10 +2,11 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve, basename } from 'node:path';
 import type { ConvertOptions, ConvertResult, Doc, DocFormat } from './types.js';
 import { OoxmlPackage } from './core/ooxml.js';
-import { createParseContext } from './core/context.js';
+import { createParseContext, type PendingAsset } from './core/context.js';
 import { parsePptx } from './pptx/parser.js';
 import { parseDocx } from './docx/parser.js';
 import { parseXlsx } from './xlsx/parser.js';
+import { parsePdf } from './pdf/parser.js';
 import { composeDocument } from './md/compose.js';
 
 /** doc2md 错误。 */
@@ -57,8 +58,11 @@ function isZip(data: Uint8Array): boolean {
   return data.length >= 4 && data[0] === 0x50 && data[1] === 0x4b && (data[2] === 0x03 || data[2] === 0x05 || data[2] === 0x07);
 }
 
-/** 解析文档为 IR（同步；图片引用已分配但未写盘）。 */
-export function parseDocument(data: Uint8Array, options: ConvertOptions = {}): { doc: Doc; assets: ReturnType<typeof createParseContext>['pending']; warnings: string[] } {
+/**
+ * 解析文档为 IR（同步；PDF 走异步入口 parsePdfDocument）。
+ * 图片引用已分配但未写盘。
+ */
+export function parseDocument(data: Uint8Array, options: ConvertOptions = {}): { doc: Doc; assets: PendingAsset[]; warnings: string[] } {
   const format = options.format ?? detectFormat(data, options.fileName);
   const bundle = createParseContext(options);
 
@@ -86,10 +90,13 @@ export function parseDocument(data: Uint8Array, options: ConvertOptions = {}): {
         break;
       }
       case 'pdf':
-        throw new Doc2mdError('PDF 解析器尚未实现（Roadmap M4），当前支持 pptx / docx / xlsx。', 'NOT_IMPLEMENTED');
+        throw new Doc2mdError(
+          'PDF 解析是异步的，请使用 convert / convertFile 或 parsePdfDocument。',
+          'NOT_IMPLEMENTED',
+        );
       case 'unknown':
         throw new Doc2mdError(
-          `无法识别文件格式${options.fileName ? `：${options.fileName}` : ''}。支持 pptx / docx / xlsx。`,
+          `无法识别文件格式${options.fileName ? `：${options.fileName}` : ''}。支持 pptx / docx / xlsx / pdf。`,
           'UNSUPPORTED_FORMAT',
         );
     }
@@ -101,10 +108,22 @@ export function parseDocument(data: Uint8Array, options: ConvertOptions = {}): {
   return { doc, assets: bundle.pending, warnings: bundle.warnings };
 }
 
+/** 解析 PDF 为 IR（异步入口）。 */
+export async function parsePdfDocument(
+  data: Uint8Array,
+  options: ConvertOptions = {},
+): Promise<{ doc: Doc; assets: PendingAsset[]; warnings: string[] }> {
+  const bundle = createParseContext(options);
+  const doc = await parsePdf(data, bundle.ctx);
+  return { doc, assets: bundle.pending, warnings: bundle.warnings };
+}
+
 /** 转换：解析 + 渲染 + 写图片。 */
 export async function convert(data: Uint8Array | ArrayBuffer | string, options: ConvertOptions = {}): Promise<ConvertResult> {
   const buf = toBytes(data);
-  const { doc, assets, warnings } = parseDocument(buf, options);
+  const format = options.format ?? detectFormat(buf, options.fileName);
+  const parsed = format === 'pdf' ? await parsePdfDocument(buf, options) : parseDocument(buf, options);
+  const { doc, assets, warnings } = parsed;
 
   const markdown = composeDocument(doc, options);
 
